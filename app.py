@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, render_template
 from main_logic import Searcher
 from forms import AddPageForm
@@ -5,7 +7,7 @@ from forms import AddPageForm
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'you-will-never-guess'
-
+app.config['DEBUG'] = True
 
 @app.route('/greeting')
 def greeting():
@@ -28,7 +30,9 @@ def main_page():
         return render_template('findhi.html', loading_bar=False, form=AddPageForm())
     return render_template('findhi.html', loading_bar=True, form=AddPageForm())
 
-app.run(port=80)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
 
 
 

@@ -21,46 +21,55 @@ class Searcher():
         self.goal = goal
         Searcher.values.update(first_value=self.start)
 
-    @classmethod
-    def show_result(cls):
+    def show_result(self):
         def title_and_link(title: str):
             print(title)
             print(Searcher.values)
             page_py = wiki_wiki.page(title)
-            return f"\n\"{title}\", ссылка \"{page_py.canonicalurl}\""
+            try:
+                url = page_py.canonicalurl
+            except KeyError:
+                url = "Ссылка удалена..."
+            return f"\n\"{title}\", ссылка \"{url}\""
 
-        if cls.values.get("fourth_value"):
+        if Searcher.values.get("fourth_value"):
             return_message = f"""
-            Мы начали с \"{cls.values.get("first_value")}\", и перешли сюда \"{cls.values.get("second_value")}\" \n
-            Потом нашли это \"{cls.values.get("third_value")}\" \n\nА заключающим шагом был он \"{cls.values.get("fourth_value")}\" \n
-            Вот все линки для пруфов: {title_and_link(cls.values.get("first_value"))} -> 
-            {title_and_link(cls.values.get("second_value"))} ->
-            {title_and_link(cls.values.get("third_value"))} ->
-            {title_and_link(cls.values.get("fourth_value"))}.
+            Мы начали с \"{Searcher.values.get("first_value")}\", и перешли сюда \"{Searcher.values.get("second_value")}\" \n
+            Потом нашли это \"{Searcher.values.get("third_value")}\" \n\nА заключающим шагом был он \"{Searcher.values.get("fourth_value")}\" \n
+            Вот все линки для пруфов: {title_and_link(Searcher.values.get("first_value"))} -> 
+            {title_and_link(Searcher.values.get("second_value"))} ->
+            {title_and_link(Searcher.values.get("third_value"))} ->
+            {title_and_link(Searcher.values.get("fourth_value"))}.
             """
-        elif cls.values.get("third_value"):
+        elif Searcher.values.get("third_value"):
             return_message = f"""
-            Мы начали с \"{cls.values.get("first_value")}\", потом перешли сюда \"{cls.values.get("second_value")}\" \n
-            И закончили тут \"{cls.values.get("third_value")}\" \n\n
-            Вот все линки для пруфов: {title_and_link(cls.values.get("first_value"))}\" -> 
-            {title_and_link(cls.values.get("second_value"))} ->
-            {title_and_link(cls.values.get("third_value"))}.
+            Мы начали с \"{Searcher.values.get("first_value")}\", потом перешли сюда \"{Searcher.values.get("second_value")}\" \n
+            И закончили тут \"{Searcher.values.get("third_value")}\" \n\n
+            Вот все линки для пруфов: {title_and_link(Searcher.values.get("first_value"))}\" -> 
+            {title_and_link(Searcher.values.get("second_value"))} ->
+            {title_and_link(Searcher.values.get("third_value"))}.
             """
-        elif cls.values.get("second_value"):
+        elif Searcher.values.get("second_value"):
             return_message = f"""
-            Мы начали с \"{cls.values.get("first_value")}\", а закончили тут \"{cls.values.get("second_value")}\" \n\n
-            Вот все линки для пруфов: {title_and_link(cls.values.get("first_value"))} -> 
-            {title_and_link(cls.values.get("second_value"))}.
+            Мы начали с \"{Searcher.values.get("first_value")}\", а закончили тут \"{Searcher.values.get("second_value")}\" \n\n
+            Вот все линки для пруфов: {title_and_link(Searcher.values.get("first_value"))} -> 
+            {title_and_link(Searcher.values.get("second_value"))}.
             """
-        elif cls.values.get("first_value") == cls.values.get("self.start"):
+        elif Searcher.values.get("first_value") == self.goal:
             return_message = f"""
-            ТЫ ДОЛБАЁБ. Начало было тут {title_and_link(cls.values.get('first_value'))}, 
-            и конец тоже тут {title_and_link(cls.values.get('first_value'))}.
+            Будь внимательнее. Начало было тут {title_and_link(Searcher.values.get('first_value'))}, 
+            и конец тоже тут {title_and_link(Searcher.values.get('first_value'))}.
             """
-        # Searcher.values = dict()
-        return cls.flasher(return_message)
+        else:
+            return_message = ''
+
+        Searcher.values = dict()
+        print(return_message)
+        return Searcher.flasher(return_message)
 
     def search(self):
+        if self.start == self.goal:
+            return self.show_result()
         title = self.start
         page = wiki_wiki.page(title)
         links = page.links
@@ -70,13 +79,18 @@ class Searcher():
             result = self.is_leads_to_goal(title, self.goal)
             if result:
                 # Searcher.values.update(second_value=title)
-                return Searcher.show_result()
+                return self.show_result()
 
         for title in titles:
             Searcher.values.update(second_value=title)
             result = self.check_links_page_links(title)
-            if result:
-                return Searcher.show_result()
+            if type(result) is str and result != "break":
+                return self.show_result()
+            # break the iteration on success
+            elif result == "break":
+                break
+            else:
+                continue
 
     def check_links_page_links(self, title: str):
         page = wiki_wiki.page(title)
@@ -91,7 +105,8 @@ class Searcher():
             Searcher.values.update(third_value=title)
             result = self.check_page_links(title)
             if result:
-                return Searcher.show_result()
+                self.show_result()
+                return "break"
         return False
 
     def check_page_links(self, origin_title: str):
@@ -107,7 +122,7 @@ class Searcher():
 
     @staticmethod
     def is_leads_to_goal(title: str, goal: str) -> bool:
-        result = re.search(rf"{goal}", title)
+        result = re.search(rf"(^|\b){goal}(,|\b)", title, flags=re.IGNORECASE)
         return bool(result)
 
     @staticmethod
