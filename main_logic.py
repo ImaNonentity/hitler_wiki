@@ -5,7 +5,7 @@ from flask import flash, render_template
 
 from forms import AddPageForm
 
-wiki_wiki = wikipediaapi.Wikipedia('ru')
+wiki_wiki = wikipediaapi.Wikipedia('ru', timeout=120.0)
 # # page_pi = wiki_wiki.page('Питон')
 # page_gi = wiki_wiki.page('Гитлер')
 #
